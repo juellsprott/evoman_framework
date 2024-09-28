@@ -53,6 +53,7 @@ def main():
     n_vars = (env.get_num_sensors()+1)*n_hidden_neurons + (n_hidden_neurons+1)*5
 
     # start writing your own code from here
+    print(n_vars)
 
 
 

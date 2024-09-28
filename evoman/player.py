@@ -91,7 +91,6 @@ class Player(pygame.sprite.Sprite):
         self.sensors = None
 
     def update(self, dt, game):
-
         if game.freeze_p != 0 or game.start != 1:
             game.tilemap.set_focus(self.rect.x, self.rect.y)
             return
