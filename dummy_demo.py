@@ -11,10 +11,11 @@ from typing import Dict
 
 import random
 
-from deap import base, creator, tools
+from deap import base, creator, tools, algorithms
 import numpy as np
 
 from evoman.environment import Environment
+from demo_controller import player_controller
 
 experiment_name = "dummy_demo"
 if not os.path.exists(experiment_name):
@@ -46,14 +47,20 @@ class EvoAlgo1:
         return toolbox.population(n=100)  # type: ignore
 
 
-# initializes environment with ai player using random controller, playing against static enemy
-env = Environment(experiment_name=experiment_name)
-env.play()
-
 # env
 if __name__ == "__main__":
     # load network parameters
     params = json.load(open("params.json"))
 
+    # initializes environment with ai player using random controller, playing against static enemy
+    print('test')
+    env = Environment(experiment_name=experiment_name,
+                    enemies=[8],
+                    playermode="ai",
+                    player_controller=player_controller(params["n_per_ind"]),
+                    enemymode="static",
+                    level=1,
+                    speed="fastest",
+                    visuals=False)
+    env.play()
     algo = EvoAlgo1(env, config=params)
-    
