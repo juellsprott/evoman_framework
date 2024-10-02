@@ -32,11 +32,6 @@ class EvoAlgo1:
         p.add_reporter(neat.StdOutReporter(True))
         stats = neat.StatisticsReporter()
         p.add_reporter(stats)
-        p.add_reporter(
-            neat.Checkpointer(
-                10, filename_prefix=f"{self.filename}/run-{run_id}-neat-checkpoint-"
-            )
-        )
         winner = p.run(self.evaluate, n_gens)
 
         # Display the winning genome.
@@ -45,25 +40,12 @@ class EvoAlgo1:
         # Show output of the most fit genome against training data.
         print("\nOutput:")
         winner_net = neat.nn.FeedForwardNetwork.create(winner, self.config)
-        # self.env.visuals = True
-        # self.env.speed = "normal"
-        result = self.env.play(pcont=winner_net)  # type: ignore
-        print(f"\nResult: {result}")
-        self.plot_stats(
-            stats, view=True, filename=f"{self.filename}/avg_fitness_run{run_id}.png"
-        )
-        
-        with open(f"{self.filename}/winner_genome_run_{run_id}.pkl", "wb") as f:
-            pickle.dump(winner, f)
-        
-        return result
-    
-    def eval_genomes(self, genome):
-        net = neat.nn.FeedForwardNetwork.create(genome, self.config)
-        fitness, plife, elife, playtime = self.env.play(pcont=net)  # type: ignore
-        print("Best genome achieves the following:")
-        print(f"Fitness: {fitness}, Player life: {plife}, Enemy life: {elife}, Playtime: {playtime}")
 
+        fitness, _, _, _ = self.env.play(pcont=winner_net)  # type: ignore
+        print(f"\nResult: {fitness}")
+
+        return fitness, winner, stats
+    
     def plot_stats(
         self, statistics, ylog=False, view=False, filename="avg_fitness.png"
     ):
@@ -106,5 +88,6 @@ class EvoAlgo2(EvoAlgo1):
             fitness = (
                 (1 - self.alpha) * (max_life - elife) + self.alpha * plife
             ) ** 2 - self.beta * np.log(playtime)
+            fitness = fitness / 100
             
             genome.fitness = fitness
