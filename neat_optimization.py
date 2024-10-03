@@ -66,24 +66,28 @@ def argparser():
     return parser.parse_args()
 
 
-def eval_genomes(genome, config, experiment_name, enemy, file_path):
-    i_gains = []
-    for i in range(5):
-        env = Environment(
-            experiment_name=experiment_name,
-            enemies=[enemy],
-            playermode="ai",
-            player_controller=neat_controller(_n_hidden=0),
-            enemymode="static",
-            level=2,
-            speed="fastest",
-            visuals=False,
-        )
-        net = neat.nn.FeedForwardNetwork.create(genome, config)
-        fitness, plife, elife, playtime = env.play(pcont=net)  # type: ignore
-        i_gains.append(plife - elife)
-        print(f"Best genome achieves individual gain for run {i + 1}: {plife - elife}")
-    np.save(file_path, np.array(i_gains))
+def eval_genomes(genomes, config, experiment_name, enemy, file_path):
+    all_i_gains = []
+    for genome in genomes:
+        curr_i_gains = []
+        for i in range(5):
+            env = Environment(
+                experiment_name=experiment_name,
+                enemies=[enemy],
+                playermode="ai",
+                player_controller=neat_controller(_n_hidden=0),
+                enemymode="static",
+                level=2,
+                speed="fastest",
+                visuals=False,
+            )
+            net = neat.nn.FeedForwardNetwork.create(genome, config)
+            fitness, plife, elife, playtime = env.play(pcont=net)  # type: ignore
+            curr_i_gains.append(plife - elife)
+            print(f"Best genome achieves individual gain for run {i + 1}: {plife - elife}")
+        all_i_gains.append(np.array(curr_i_gains))
+    print(f"Saving individual gains to {file_path}. File shape: {np.array(all_i_gains).shape} (n_genomes, n_runs)")	
+    np.save(file_path, np.array(all_i_gains))
 
 
 # env
@@ -110,6 +114,7 @@ if __name__ == "__main__":
     for enemy in enemies:
         mean_stats = []
         max_stats = []
+        all_winners = []
         best_winner = None
         best_fitness = 0
         filepath = f"{experiment_name}/{args.algorithm}/enemy_{enemy}"
@@ -138,6 +143,7 @@ if __name__ == "__main__":
                 best_winner = curr_run_winner
                 best_fitness = curr_run_best_fitness
 
+            all_winners.append(curr_run_winner)
             mean_stats.append(np.array(curr_run_stats.get_fitness_mean()))
             max_stats.append(
                 np.array([c.fitness for c in curr_run_stats.most_fit_genomes])
@@ -145,7 +151,7 @@ if __name__ == "__main__":
 
         # save the best winner genome
         eval_genomes(
-            genome=best_winner,
+            genomes=all_winners,
             file_path=f"{filepath}/best_winner_igain.npy",
             config=config,
             experiment_name=experiment_name,
